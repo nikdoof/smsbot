@@ -47,7 +47,7 @@ class TelegramSmsBot(object):
         if not update.message.chat['id'] in self.subscriber_ids:
             self.logger.info('{0} subscribed'.format(update.message.chat['username']))
             self.subscriber_ids.append(update.message.chat['id'])
-            self.send_owner('{0} has subscribed'.format(update.message.chat['username'])))
+            self.send_owner('{0} has subscribed'.format(update.message.chat['username']))
             update.message.reply_markdown('You have been subscribed to SMS notifications')
         else:
             update.message.reply_markdown('You are already subscribed to SMS notifications')
@@ -57,7 +57,7 @@ class TelegramSmsBot(object):
         if update.message.chat['id'] in self.subscriber_ids:
             self.logger.info('{0} unsubscribed'.format(update.message.chat['username']))
             self.subscriber_ids.remove(update.message.chat['id'])
-            self.send_owner('{0} has unsubscribed'.format(update.message.chat['username'])))
+            self.send_owner('{0} has unsubscribed'.format(update.message.chat['username']))
             update.message.reply_markdown('You have been unsubscribed to SMS notifications')
         else:
             update.message.reply_markdown('You are not subscribed to SMS notifications')
