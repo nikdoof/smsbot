@@ -66,7 +66,7 @@ class TelegramSmsBot(object):
         self.logger.warning('Update "%s" caused error "%s"', update, context.error)
 
     def send_message(self, message, chat_id):
-        self.bot.sendMessage(text=message, chat_id=chat_id, parse_mode=ParseMode.MARKDOWN_V2)
+        self.bot.sendMessage(text=message, chat_id=chat_id)
 
     def send_owner(self, message):
         if self.owner_id:
@@ -124,14 +124,22 @@ class TwilioWebhookHandler(object):
         self.bot = bot
 
     def index(self):
-        return 'Smsbot v{0}'.format(__version__)
+        return 'Smsbot v{0} - {1}'.format(__version__, request.values.to_dict())
 
     @validate_twilio_request
     def message(self):
+
+        message = "From: {From}\n\n{Body}".format(**request.values.to_dict())
+
+        current_app.logger.info('Received SMS from {From}: {Body}'.format(**request.values.to_dict()))
+        self.bot.send_subscribers(message)
+
         return '<response></response>'
 
     @validate_twilio_request
     def call(self):
+        current_app.logger.info('Received Call from {From}'.format(**request.values.to_dict()))
+        self.bot.send_subscribers('Received Call from {From}, rejecting.'.format(**request.values.to_dict()))
         # Always reject calls
         return '<Response><Reject/></Response>'
 
