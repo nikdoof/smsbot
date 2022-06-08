@@ -47,6 +47,7 @@ class TelegramSmsBot(object):
         if not update.message.chat['id'] in self.subscriber_ids:
             self.logger.info('{0} subscribed'.format(update.message.chat['username']))
             self.subscriber_ids.append(update.message.chat['id'])
+            self.send_owner('{0} has subscribed'.format(update.message.chat['username'])))
             update.message.reply_markdown('You have been subscribed to SMS notifications')
         else:
             update.message.reply_markdown('You are already subscribed to SMS notifications')
@@ -56,6 +57,7 @@ class TelegramSmsBot(object):
         if update.message.chat['id'] in self.subscriber_ids:
             self.logger.info('{0} unsubscribed'.format(update.message.chat['username']))
             self.subscriber_ids.remove(update.message.chat['id'])
+            self.send_owner('{0} has unsubscribed'.format(update.message.chat['username'])))
             update.message.reply_markdown('You have been unsubscribed to SMS notifications')
         else:
             update.message.reply_markdown('You are not subscribed to SMS notifications')
@@ -63,6 +65,7 @@ class TelegramSmsBot(object):
     def error_handler(self, update, context):
         """Log Errors caused by Updates."""
         self.logger.warning('Update "%s" caused error "%s"', update, context.error)
+        self.send_owner('Update "%{0}" caused error "{1}"'.format(update, context.error))
 
     def send_message(self, message, chat_id):
         self.bot.sendMessage(text=message, chat_id=chat_id)
