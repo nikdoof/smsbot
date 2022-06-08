@@ -160,6 +160,16 @@ def main():
 
     # Start bot
     telegram_bot = TelegramSmsBot(token)
+
+    # Set the owner ID if configured
+    if 'SMSBOT_OWNER_ID' in os.environ:
+        telegram_bot.set_owner(os.environ.get('SMS_OWNER_ID'))
+
+    # Add default subscribers
+    if 'SMSBOT_DEFAULT_SUBSCRIBERS' in os.environ:
+        for chat_id in os.environ.get('SMSBOT_DEFAULT_SUBSCRIBERS').split(','):
+            telegram_bot.add_subscriber(chat_id)
+
     telegram_bot.start()
 
     # Start webhooks
