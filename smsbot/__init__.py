@@ -3,23 +3,22 @@ import os
 import sys
 from functools import wraps
 
+import pkg_resources
 from flask import Flask, abort, current_app, request
 from telegram.ext import CommandHandler, Updater
 from twilio.request_validator import RequestValidator
 from waitress import serve
-import pkg_resources
 
-pkg_version = pkg_resources.require("smsbot")[0].version
+pkg_version = pkg_resources.require('smsbot')[0].version
 
 
 class TelegramSmsBot(object):
 
-    owner_id = None
-    subscriber_ids = []
-
-    def __init__(self, token):
+    def __init__(self, token, owner=None, subscribers=None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bot_token = token
+        self.owner_id = owner
+        self.subscriber_ids = subscribers or []
 
     def start(self):
         self.logger.info('Starting bot...')
@@ -44,7 +43,7 @@ class TelegramSmsBot(object):
 
     def subscribe_handler(self, update, context):
         self.logger.info('/subscribe command received')
-        if not update.message.chat['id'] in self.subscriber_ids:
+        if update.message.chat['id'] not in self.subscriber_ids:
             self.logger.info('{0} subscribed'.format(update.message.chat['username']))
             self.subscriber_ids.append(update.message.chat['id'])
             self.send_owner('{0} has subscribed'.format(update.message.chat['username']))
@@ -85,16 +84,16 @@ class TelegramSmsBot(object):
         self.subscriber_ids.append(chat_id)
 
 
-def validate_twilio_request(f):
+def validate_twilio_request(func):
     """Validates that incoming requests genuinely originated from Twilio"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):  # noqa: WPS430
         # Create an instance of the RequestValidator class
         twilio_token = os.environ.get('SMSBOT_TWILIO_AUTH_TOKEN')
 
         if not twilio_token:
             current_app.logger.warning('Twilio request validation skipped due to SMSBOT_TWILIO_AUTH_TOKEN missing')
-            return f(*args, **kwargs)
+            return func(*args, **kwargs)
 
         validator = RequestValidator(twilio_token)
 
@@ -103,14 +102,14 @@ def validate_twilio_request(f):
         request_valid = validator.validate(
             request.url,
             request.form,
-            request.headers.get('X-TWILIO-SIGNATURE', ''))
+            request.headers.get('X-TWILIO-SIGNATURE', ''),
+        )
 
         # Continue processing the request if it's valid, return a 403 error if
         # it's not
         if request_valid or current_app.debug:
-            return f(*args, **kwargs)
-        else:
-            return abort(403)
+            return func(*args, **kwargs)
+        return abort(403)
     return decorated_function
 
 
@@ -123,7 +122,7 @@ class TwilioWebhookHandler(object):
         self.app.add_url_rule('/message', 'message', self.message, methods=['POST'])
         self.app.add_url_rule('/call', 'call', self.call, methods=['POST'])
 
-    def set_bot(self, bot):
+    def set_bot(self, bot):  # noqa: WPS615
         self.bot = bot
 
     def index(self):
@@ -135,7 +134,7 @@ class TwilioWebhookHandler(object):
     @validate_twilio_request
     def message(self):
 
-        message = "From: {From}\n\n{Body}".format(**request.values.to_dict())
+        message = 'From: {From}\n\n{Body}'.format(**request.values.to_dict())
 
         current_app.logger.info('Received SMS from {From}: {Body}'.format(**request.values.to_dict()))
         self.bot.send_subscribers(message)
