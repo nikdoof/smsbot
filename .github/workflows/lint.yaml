@@ -1,0 +1,21 @@
+name: Lint
+
+'on':
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-linters:
+    name: Run linters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: wemake-python-styleguide
+        uses: wemake-services/wemake-python-styleguide@0.16.0

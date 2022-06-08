@@ -1,0 +1,4 @@
+flask
+waitress
+twilio
+python-telegram-bot
