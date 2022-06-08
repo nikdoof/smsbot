@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import logging
 import os
 import sys
@@ -147,7 +146,7 @@ class TwilioWebhookHandler(object):
         serve(self.app, host=host, port=port)
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(level=logging.INFO)
 
     listen_host = os.environ.get('SMSBOT_LISTEN_HOST') or '0.0.0.0'
@@ -165,4 +164,4 @@ if __name__ == "__main__":
     # Start webhooks
     webhooks = TwilioWebhookHandler()
     webhooks.set_bot(telegram_bot)
-    webhooks.serve()
+    webhooks.serve(host=listen_host, port=listen_port)
