@@ -119,6 +119,7 @@ class TwilioWebhookHandler(object):
     def __init__(self):
         self.app = Flask(self.__class__.__name__)
         self.app.add_url_rule('/', 'index', self.index, methods=['GET'])
+        self.app.add_url_rule('/health', 'health', self.health, methods=['GET'])
         self.app.add_url_rule('/message', 'message', self.message, methods=['POST'])
         self.app.add_url_rule('/call', 'call', self.call, methods=['POST'])
 
@@ -126,7 +127,10 @@ class TwilioWebhookHandler(object):
         self.bot = bot
 
     def index(self):
-        return 'Smsbot v{0} - {1}'.format(pkg_version, request.values.to_dict())
+        return ''
+
+    def health(self):
+        return '<h1>Smsbot v{0}</h1><p><b>Owner</b>: {1}</p><p><b>Subscribers</b>: {2}</p>'.format(pkg_version, self.bot.owner_id, self.bot.subscriber_ids)
 
     @validate_twilio_request
     def message(self):
