@@ -7,8 +7,9 @@ from flask import Flask, abort, current_app, request
 from telegram.ext import CommandHandler, Updater
 from twilio.request_validator import RequestValidator
 from waitress import serve
+import pkg_resources
 
-__version__ = '0.0.1'
+pkg_version = pkg_resources.require("smsbot")[0].version
 
 
 class TelegramSmsBot(object):
@@ -39,7 +40,7 @@ class TelegramSmsBot(object):
     def help_handler(self, update, context):
         """Send a message when the command /help is issued."""
         self.logger.info('/help command received in chat: %s', update.message.chat)
-        update.message.reply_markdown('Smsbot v{0}\n\n/help\n/subscribe\n/unsubscribe'.format(__version__))
+        update.message.reply_markdown('Smsbot v{0}\n\n/help\n/subscribe\n/unsubscribe'.format(pkg_version))
 
     def subscribe_handler(self, update, context):
         self.logger.info('/subscribe command received')
@@ -122,7 +123,7 @@ class TwilioWebhookHandler(object):
         self.bot = bot
 
     def index(self):
-        return 'Smsbot v{0} - {1}'.format(__version__, request.values.to_dict())
+        return 'Smsbot v{0} - {1}'.format(pkg_version, request.values.to_dict())
 
     @validate_twilio_request
     def message(self):
@@ -147,13 +148,14 @@ class TwilioWebhookHandler(object):
 
 def main():
     logging.basicConfig(level=logging.INFO)
+    logging.info('smsbot v%s', pkg_version)
 
     listen_host = os.environ.get('SMSBOT_LISTEN_HOST') or '0.0.0.0'
     listen_port = int(os.environ.get('SMSBOT_LISTEN_PORT') or '80')
 
     token = os.environ.get('SMSBOT_TELEGRAM_BOT_TOKEN')
     if not token:
-        logging.exception('Telegram Bot token missing')
+        logging.error('Telegram Bot token missing')
         sys.exit(1)
 
     # Start bot
