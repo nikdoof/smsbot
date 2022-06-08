@@ -170,7 +170,7 @@ def main():
 
     # Set the owner ID if configured
     if 'SMSBOT_OWNER_ID' in os.environ:
-        telegram_bot.set_owner(os.environ.get('SMS_OWNER_ID'))
+        telegram_bot.set_owner(os.environ.get('SMSBOT_OWNER_ID'))
 
     # Add default subscribers
     if 'SMSBOT_DEFAULT_SUBSCRIBERS' in os.environ:
