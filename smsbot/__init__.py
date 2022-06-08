@@ -3,8 +3,7 @@ import os
 import sys
 from functools import wraps
 
-from flask import Flask, abort, request, current_app
-from telegram import ParseMode
+from flask import Flask, abort, current_app, request
 from telegram.ext import CommandHandler, Updater
 from twilio.request_validator import RequestValidator
 from waitress import serve
