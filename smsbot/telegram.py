@@ -1,7 +1,6 @@
 import logging
 
-from prometheus_client import Counter, Summary, make_wsgi_app
-from setuptools import Command
+from prometheus_client import Counter, Summary
 from telegram.ext import CommandHandler, Updater
 
 from smsbot.utils import get_smsbot_version
@@ -44,7 +43,7 @@ class TelegramSmsBot(object):
 
         commands = []
         for command in self.updater.dispatcher.handlers[0]:
-            commands.extend(['/{0}'.format(x) for x in command.command])
+            commands.extend(['/{0}'.format(cmd) for cmd in command.command])
 
         update.message.reply_markdown('Smsbot v{0}\n\n{1}'.format(get_smsbot_version(), '\n'.join(commands)))
         COMMAND_COUNT.inc()
