@@ -1,4 +1,4 @@
-from smsbot import main
+from smsbot.cli import main
 
 if __name__ == '__main__':
     main()
