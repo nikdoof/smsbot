@@ -1,4 +1,5 @@
 import logging
+from setuptools import Command
 
 from telegram.ext import CommandHandler, Updater
 
@@ -32,7 +33,12 @@ class TelegramSmsBot(object):
     def help_handler(self, update, context):
         """Send a message when the command /help is issued."""
         self.logger.info('/help command received in chat: %s', update.message.chat)
-        update.message.reply_markdown('Smsbot v{0}\n\n/help\n/subscribe\n/unsubscribe'.format(get_smsbot_version()))
+
+        commands = []
+        for command in self.updater.dispatcher.handlers[0]:
+            commands.extend(['/{0}'.format(x) for x in command.command])
+
+        update.message.reply_markdown('Smsbot v{0}\n\n{1}'.format(get_smsbot_version(), '\n'.join(commands)))
 
     def subscribe_handler(self, update, context):
         self.logger.info('/subscribe command received')
