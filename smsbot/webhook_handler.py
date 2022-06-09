@@ -70,7 +70,7 @@ class TwilioWebhookHandler(object):
     def call(self):
         current_app.logger.info('Received Call from {From}'.format(**request.values.to_dict()))
         self.bot.send_subscribers('Received Call from {From}, rejecting.'.format(**request.values.to_dict()))
-        
+
         # Always reject calls
         return '<Response><Reject/></Response>'
 
