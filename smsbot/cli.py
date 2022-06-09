@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import argparse
 
 import pkg_resources
 
@@ -11,29 +12,31 @@ pkg_version = pkg_resources.require('smsbot')[0].version
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    parser = argparse.ArgumentParser('smsbot')
+    parser.add_argument('--listen-host', default=os.environ.get('SMSBOT_LISTEN_HOST') or '0.0.0.0')
+    parser.add_argument('--listen-port', default=os.environ.get('SMSBOT_LISTEN_PORT') or '80')
+    parser.add_argument('--telegram-bot-token', default=os.environ.get('SMSBOT_TELEGRAM_BOT_TOKEN'))
+    parser.add_argument('--owner-id', default=os.environ.get('SMSBOT_OWNER_ID'))
+    parser.add_argument('--default-subscribers', default=os.environ.get('SMSBOT_DEFAULT_SUBSCRIBERS'))
+    parser.add_argument('--log-level', default='INFO')
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.getLevelName(args.log_level))
     logging.info('smsbot v%s', pkg_version)
-
-    listen_host = os.environ.get('SMSBOT_LISTEN_HOST') or '0.0.0.0'
-    listen_port = int(os.environ.get('SMSBOT_LISTEN_PORT') or '80')
-
-    token = os.environ.get('SMSBOT_TELEGRAM_BOT_TOKEN')
-    if not token:
-        logging.error('Telegram Bot token missing')
-        sys.exit(1)
+    logging.debug('Arguments: %s', args)
 
     # Start bot
-    telegram_bot = TelegramSmsBot(token)
+    telegram_bot = TelegramSmsBot(args.telegram_bot_token)
 
     # Set the owner ID if configured
-    if 'SMSBOT_OWNER_ID' in os.environ:
-        telegram_bot.set_owner(os.environ.get('SMSBOT_OWNER_ID'))
+    if args.owner_id:
+        telegram_bot.set_owner(args.owner_id)
     else:
         logging.warning('No Owner ID is set, which is not a good idea...')
 
     # Add default subscribers
-    if 'SMSBOT_DEFAULT_SUBSCRIBERS' in os.environ:
-        for chat_id in os.environ.get('SMSBOT_DEFAULT_SUBSCRIBERS').split(','):
+    if args.default_subscribers:
+        for chat_id in args.default_subscribers.split(','):
             telegram_bot.add_subscriber(chat_id)
 
     telegram_bot.start()
@@ -41,4 +44,4 @@ def main():
     # Start webhooks
     webhooks = TwilioWebhookHandler()
     webhooks.set_bot(telegram_bot)
-    webhooks.serve(host=listen_host, port=listen_port)
+    webhooks.serve(host=args.listen_host, port=args.listen_port)
