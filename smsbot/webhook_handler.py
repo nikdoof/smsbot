@@ -8,6 +8,13 @@ from waitress import serve
 
 from smsbot.utils import get_smsbot_version
 
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from prometheus_client import make_wsgi_app, Counter, Summary
+
+REQUEST_TIME = Summary('webhook_request_processing_seconds', 'Time spent processing request')
+MESSAGE_COUNT = Counter('webhook_message_count', 'Total number of messages processed')
+CALL_COUNT = Counter('webhook_call_count', 'Total number of calls processed')
+
 
 def validate_twilio_request(func):
     """Validates that incoming requests genuinely originated from Twilio"""
@@ -47,15 +54,26 @@ class TwilioWebhookHandler(object):
         self.app.add_url_rule('/message', 'message', self.message, methods=['POST'])
         self.app.add_url_rule('/call', 'call', self.call, methods=['POST'])
 
+        # Add prometheus wsgi middleware to route /metrics requests
+        self.app.wsgi_app = DispatcherMiddleware(self.app.wsgi_app, {
+            '/metrics': make_wsgi_app(),
+        })
+
     def set_bot(self, bot):  # noqa: WPS615
         self.bot = bot
 
     def index(self):
         return ''
 
+    @REQUEST_TIME.time()
     def health(self):
-        return '<h1>Smsbot v{0}</h1><p><b>Owner</b>: {1}</p><p><b>Subscribers</b>: {2}</p>'.format(get_smsbot_version(), self.bot.owner_id, self.bot.subscriber_ids)
+        return {
+            'version': get_smsbot_version(),
+            'owner': self.bot.owner_id,
+            'subscribers': self.bot.subscriber_ids,
+        }
 
+    @REQUEST_TIME.time()
     @validate_twilio_request
     def message(self):
         current_app.logger.info('Received SMS from {From}: {Body}'.format(**request.values.to_dict()))
@@ -64,14 +82,17 @@ class TwilioWebhookHandler(object):
         self.bot.send_subscribers(message)
 
         # Return a blank response
+        MESSAGE_COUNT.inc()
         return '<response></response>'
 
+    @REQUEST_TIME.time()
     @validate_twilio_request
     def call(self):
         current_app.logger.info('Received Call from {From}'.format(**request.values.to_dict()))
         self.bot.send_subscribers('Received Call from {From}, rejecting.'.format(**request.values.to_dict()))
 
         # Always reject calls
+        CALL_COUNT.inc()
         return '<Response><Reject/></Response>'
 
     def serve(self, host='0.0.0.0', port=80, debug=False):
