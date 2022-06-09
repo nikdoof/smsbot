@@ -8,21 +8,24 @@ from smsbot.utils import get_smsbot_version
 
 class TelegramSmsBot(object):
 
-    def __init__(self, token, owner=None, subscribers=None):
+    def __init__(self, token, allow_subscribing=False, owner=None, subscribers=None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bot_token = token
-        self.owner_id = owner
         self.subscriber_ids = subscribers or []
+        self.set_owner(owner)
 
-    def start(self):
-        self.logger.info('Starting bot...')
         self.updater = Updater(self.bot_token, use_context=True)
         self.updater.dispatcher.add_handler(CommandHandler('help', self.help_handler))
         self.updater.dispatcher.add_handler(CommandHandler('start', self.help_handler))
-        self.updater.dispatcher.add_handler(CommandHandler('subscribe', self.subscribe_handler))
-        self.updater.dispatcher.add_handler(CommandHandler('unsubscribe', self.unsubscribe_handler))
+        
+        if allow_subscribing:
+            self.updater.dispatcher.add_handler(CommandHandler('subscribe', self.subscribe_handler))
+            self.updater.dispatcher.add_handler(CommandHandler('unsubscribe', self.unsubscribe_handler))
+        
         self.updater.dispatcher.add_error_handler(self.error_handler)
 
+    def start(self):
+        self.logger.info('Starting bot...')
         self.updater.start_polling()
         self.bot = self.updater.bot
         self.logger.info('Bot Ready')
@@ -78,6 +81,8 @@ class TelegramSmsBot(object):
 
     def set_owner(self, chat_id):
         self.owner_id = chat_id
+        if self.owner_id and self.owner_id not in self.subscriber_ids:
+            self.subscriber_ids.append(self.owner_id)
 
     def add_subscriber(self, chat_id):
         self.subscriber_ids.append(chat_id)
