@@ -3,13 +3,12 @@ import os
 from functools import wraps
 
 from flask import Flask, abort, current_app, request
+from prometheus_client import Counter, Summary, make_wsgi_app
 from twilio.request_validator import RequestValidator
 from waitress import serve
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from smsbot.utils import get_smsbot_version
-
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
-from prometheus_client import make_wsgi_app, Counter, Summary
 
 REQUEST_TIME = Summary('webhook_request_processing_seconds', 'Time spent processing request')
 MESSAGE_COUNT = Counter('webhook_message_count', 'Total number of messages processed')

@@ -1,13 +1,14 @@
 import logging
-from setuptools import Command
 
+from prometheus_client import Counter, Summary, make_wsgi_app
+from setuptools import Command
 from telegram.ext import CommandHandler, Updater
 
 from smsbot.utils import get_smsbot_version
-from prometheus_client import make_wsgi_app, Counter, Summary
 
 REQUEST_TIME = Summary('telegram_request_processing_seconds', 'Time spent processing request')
 COMMAND_COUNT = Counter('telegram_command_count', 'Total number of commands processed')
+
 
 class TelegramSmsBot(object):
 
