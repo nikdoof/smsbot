@@ -1,8 +1,8 @@
 apiVersion: v2
-appVersion: 0.0.2
+appVersion: 0.0.3
 description: A simple Telegram bot to receive SMS messages.
 name: smsbot
-version: 0.0.2
+version: 0.0.3
 kubeVersion: ">=1.19.0-0"
 keywords:
 - smsbot
