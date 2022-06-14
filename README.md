@@ -22,3 +22,16 @@ All configuration is provided via environment variables
 | SMSBOT_OWNER_ID            | No        | ID of the owner of this bot                                                 |
 | SMSBOT_TELEGRAM_BOT_TOKEN  | Yes       | Your Bot Token for Telegram                                                 |
 | SMSBOT_TWILIO_AUTH_TOKEN   | No        | Twilio auth token, used to validate any incoming webhook calls              |
+
+## Setup
+
+To configure SMSBot, you'll need a Twilio account, either paid or trial is fine. 
+
+* Setup a number in the location you want.
+* Under Phone Numbers -> Manage -> Active Numbers, click the number you want to setup.
+* In the "Voice & Fax" section, update the "A Call Comes In" to the URL of your SMSBot instance, with the endpoint being `/call`, e.g. `http://mymachine.test.com/call`
+* In the "Messaging" section, update the "A Message Comes In" to the URL of your SMSBot instance, with the endpoint being `/message`, e.g. `http://mymachine.test.com/message`
+
+Your bot should now receive messages, on Telegram you need to start a chat or invite it into any channels you want, then update the `SMSBOT_DEFAULT_SUBSCRIBERS` values with their IDs.
+
+**Note**: You cannot send test messages from your Twilio account to your Twilio numbers, they'll be silently dropped or fail with an "Invalid Number" error.
