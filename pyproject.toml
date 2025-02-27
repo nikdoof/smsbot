@@ -2,10 +2,8 @@
 name = "smsbot"
 version = "0.0.5"
 description = "A simple Telegram bot to receive SMS messages."
-authors = [
-    {name = "Andrew Williams",email = "andy@tensixtyone.com"}
-]
-license = {text = "MIT"}
+authors = [{ name = "Andrew Williams", email = "andy@tensixtyone.com" }]
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.9,<3.10"
 dependencies = [
@@ -13,11 +11,15 @@ dependencies = [
     "waitress (>=3.0.2,<4.0.0)",
     "twilio (>=9.4.6,<10.0.0)",
     "python-telegram-bot (<20)",
-    "prometheus-client (>=0.21.1,<0.22.0)"
+    "prometheus-client (>=0.21.1,<0.22.0)",
 ]
+
+[tool.poetry]
+packages = [{ include = "smsbot" }]
 
 [tool.poetry.scripts]
 smsbot = "smsbot.cli:main"
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

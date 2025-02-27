@@ -1,34 +1,21 @@
 FROM python:3.9-alpine AS base
 
+# Builder
 FROM base AS builder
 
-ENV PYTHONFAULTHANDLER=1 \
-  PYTHONUNBUFFERED=1 \
-  PYTHONHASHSEED=random \
-  PIP_NO_CACHE_DIR=off \
-  PIP_DISABLE_PIP_VERSION_CHECK=on \
-  PIP_DEFAULT_TIMEOUT=100 \
-  POETRY_NO_INTERACTION=1 \
-  POETRY_VIRTUALENVS_CREATE=false \
-  PATH="$PATH:/runtime/bin" \
-  PYTHONPATH="$PYTHONPATH:/runtime/lib/python3.9/site-packages" \
-  # Versions:
-  POETRY_VERSION=2.1.1
+ENV POETRY_VERSION=2.1.1
 
-# System deps:
-RUN apk add build-base unzip wget python3-dev libffi-dev rust cargo openssl-dev
-RUN pip install "poetry==$POETRY_VERSION" "poetry-plugin-export"
-
+RUN apk add build-base unzip wget python3-dev libffi-dev rust cargo openssl-dev && pip install "poetry==$POETRY_VERSION" && poetry self add poetry-plugin-bundle
 WORKDIR /src
+COPY poetry.lock pyproject.toml README.md /src/
+COPY smsbot /src/smsbot
+RUN poetry bundle venv /runtime
 
-# Generate requirements and install *all* dependencies.
-COPY pyproject.toml poetry.lock /src/
-RUN poetry export --without-hashes --no-interaction --no-ansi -f requirements.txt -o requirements.txt
-RUN pip install --prefix=/runtime --force-reinstall -r requirements.txt
 
+# Final container
 FROM base AS runtime
-COPY --from=builder /runtime /usr/local
-COPY . /app
-WORKDIR /app
+
+COPY --from=builder /runtime /runtime
+ENV PATH=/runtime/bin:$PATH
 EXPOSE 8000/tcp
-CMD ["/usr/local/bin/smsbot"]
+CMD ["smsbot"]
