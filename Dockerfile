@@ -1,4 +1,4 @@
-FROM python:3.12.3-alpine3.18 AS base
+FROM python:3.9-alpine AS base
 
 FROM base AS builder
 
@@ -11,7 +11,7 @@ ENV PYTHONFAULTHANDLER=1 \
   POETRY_NO_INTERACTION=1 \
   POETRY_VIRTUALENVS_CREATE=false \
   PATH="$PATH:/runtime/bin" \
-  PYTHONPATH="$PYTHONPATH:/runtime/lib/python3.12/site-packages" \
+  PYTHONPATH="$PYTHONPATH:/runtime/lib/python3.9/site-packages" \
   # Versions:
   POETRY_VERSION=2.1.1
 
