@@ -2,12 +2,9 @@ import argparse
 import logging
 import os
 
-import pkg_resources
-
 from smsbot.telegram import TelegramSmsBot
 from smsbot.webhook_handler import TwilioWebhookHandler
-
-pkg_version = pkg_resources.require('smsbot')[0].version
+from smsbot.utils import get_smsbot_version
 
 
 def main():
@@ -21,7 +18,7 @@ def main():
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.getLevelName(args.log_level))
-    logging.info('smsbot v%s', pkg_version)
+    logging.info('smsbot v%s', get_smsbot_version())
     logging.debug('Arguments: %s', args)
 
     # Start bot

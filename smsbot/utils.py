@@ -1,5 +1,5 @@
-import pkg_resources
+from importlib.metadata import version
 
 
 def get_smsbot_version():
-    return pkg_resources.require('smsbot')[0].version
+    return version("smsbot")

@@ -1,5 +1,0 @@
-flask
-waitress
-twilio
-python-telegram-bot
-prometheus_client

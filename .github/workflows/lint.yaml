@@ -1,6 +1,6 @@
 name: Lint
 
-'on':
+"on":
   push:
     branches:
       - main
@@ -9,13 +9,17 @@ name: Lint
       - main
 
 jobs:
-  run-linters:
-    name: Run linters
+  lint:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: ["3.12"]
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: wemake-python-styleguide
-        uses: wemake-services/wemake-python-styleguide@0.17.0
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Lint with ruff
+        run: |
+          make lint
