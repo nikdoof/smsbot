@@ -17,5 +17,5 @@ FROM base AS runtime
 
 COPY --from=builder /runtime /runtime
 ENV PATH=/runtime/bin:$PATH
-EXPOSE 8000/tcp
+EXPOSE 80/tcp
 CMD ["smsbot"]
