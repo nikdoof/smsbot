@@ -16,6 +16,10 @@ jobs:
         python-version: ["3.9"]
     steps:
       - uses: actions/checkout@v4
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -27,4 +31,4 @@ jobs:
           virtualenvs-in-project: true
       - name: Lint with ruff
         run: |
-          make lint
+          task python:lint
