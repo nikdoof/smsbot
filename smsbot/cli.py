@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
 
+    # TODO: Replace for Py >=3.11
     logging.basicConfig(level=logging.getLevelName(args.log_level))
     logging.info("smsbot v%s", get_smsbot_version())
     logging.debug("Arguments: %s", args)
