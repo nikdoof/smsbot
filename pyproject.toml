@@ -11,7 +11,7 @@ dependencies = [
     "waitress (>=3.0.2,<4.0.0)",
     "twilio (>=9.4.6,<10.0.0)",
     "python-telegram-bot (<20)",
-    "prometheus-client (>=0.21.1,<0.22.0)",
+    "prometheus-client (>=0.22.1,<0.23.0)",
 ]
 
 [tool.poetry]
