@@ -102,3 +102,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Task completions
+completion/
+
+# Build artifacts  
+dist/
+
+# uv cache
+.ruff_cache/
