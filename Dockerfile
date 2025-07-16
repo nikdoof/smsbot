@@ -1,21 +1,16 @@
-FROM python:3.9-alpine AS base
+FROM python:3.9-alpine
 
-# Builder
-FROM base AS builder
+# Install uv
+# Note: In some build environments, you may need to add --trusted-host flags for SSL
+RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org uv
 
-ENV POETRY_VERSION=2.1.1
+WORKDIR /app
+COPY uv.lock pyproject.toml README.md /app/
+COPY smsbot /app/smsbot
 
-RUN apk add build-base unzip wget python3-dev libffi-dev rust cargo openssl-dev && pip install "poetry==$POETRY_VERSION" && poetry self add poetry-plugin-bundle
-WORKDIR /src
-COPY poetry.lock pyproject.toml README.md /src/
-COPY smsbot /src/smsbot
-RUN poetry bundle venv /runtime
+# Install dependencies
+# Note: In some environments, you may need to configure SSL certificates
+RUN uv sync --frozen --no-dev
 
-
-# Final container
-FROM base AS runtime
-
-COPY --from=builder /runtime /runtime
-ENV PATH=/runtime/bin:$PATH
 EXPOSE 80/tcp
-CMD ["smsbot"]
+CMD ["uv", "run", "smsbot"]
