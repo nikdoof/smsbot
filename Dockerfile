@@ -1,16 +1,22 @@
-FROM python:3.9-alpine
+FROM python:3.9-alpine AS base
+
+# Builder
+FROM base AS builder
 
 # Install uv
-# Note: In some build environments, you may need to add --trusted-host flags for SSL
-RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org uv
+RUN pip install uv
 
-WORKDIR /app
-COPY uv.lock pyproject.toml README.md /app/
-COPY smsbot /app/smsbot
+WORKDIR /src
+COPY uv.lock pyproject.toml README.md /src/
+COPY smsbot /src/smsbot
 
-# Install dependencies
-# Note: In some environments, you may need to configure SSL certificates
+# Create virtual environment and install dependencies
 RUN uv sync --frozen --no-dev
 
+# Final container
+FROM base AS runtime
+
+COPY --from=builder /src/.venv /runtime
+ENV PATH=/runtime/bin:$PATH
 EXPOSE 80/tcp
-CMD ["uv", "run", "smsbot"]
+CMD ["smsbot"]
