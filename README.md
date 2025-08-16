@@ -25,7 +25,7 @@ All configuration is provided via environment variables
 
 ## Setup
 
-To configure SMSBot, you'll need a Twilio account, either paid or trial is fine. 
+To configure SMSBot, you'll need a Twilio account, either paid or trial is fine.
 
 * Setup a number in the location you want.
 * Under Phone Numbers -> Manage -> Active Numbers, click the number you want to setup.
@@ -35,3 +35,10 @@ To configure SMSBot, you'll need a Twilio account, either paid or trial is fine.
 Your bot should now receive messages, on Telegram you need to start a chat or invite it into any channels you want, then update the `SMSBOT_DEFAULT_SUBSCRIBERS` values with their IDs.
 
 **Note**: You cannot send test messages from your Twilio account to your Twilio numbers, they'll be silently dropped or fail with an "Invalid Number" error.
+
+## Helm Chart
+
+Previously this repository had a Helm chart to configure smsbot for Kubernetes clusters. It was removed as the chart itself didn't offer any additional functionality outside of creating the deployment by hand. If you want to use Helm then I suggest using one of the following generic charts that can be used to deploy applications:
+
+* https://github.com/stakater/application
+* https://github.com/nikdoof/helm-charts/tree/master/charts/common-chart
