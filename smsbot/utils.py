@@ -86,5 +86,5 @@ class TwilioCall(TwilioWebhookPayload):
         return msg
 
     def to_markdownv2(self):
-        msg = f"Call from {self._escape(self.from_number)}, rejected\."
+        msg = f"Call from {self._escape(self.from_number)}, rejected\\."
         return msg
