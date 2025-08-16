@@ -1,21 +1,18 @@
-FROM python:3.9-alpine AS base
+FROM ghcr.io/astral-sh/uv:python3.9-bookworm-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+ENV UV_PYTHON_DOWNLOADS=0
+WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
 
-# Builder
-FROM base AS builder
 
-ENV POETRY_VERSION=2.1.1
-
-RUN apk add build-base unzip wget python3-dev libffi-dev rust cargo openssl-dev && pip install "poetry==$POETRY_VERSION" && poetry self add poetry-plugin-bundle
-WORKDIR /src
-COPY poetry.lock pyproject.toml README.md /src/
-COPY smsbot /src/smsbot
-RUN poetry bundle venv /runtime
-
-
-# Final container
-FROM base AS runtime
-
-COPY --from=builder /runtime /runtime
-ENV PATH=/runtime/bin:$PATH
+FROM python:3.9-slim-bookworm
+COPY --from=builder --chown=app:app /app /app
+ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 80/tcp
 CMD ["smsbot"]

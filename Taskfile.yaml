@@ -1,15 +1,10 @@
 version: 3
 tasks:
-  python:env:
-    cmds:
-      - poetry install --with=dev,github
   python:lint:
     desc: Lint Python files
-    deps:
-      - python:env
     cmds:
-      - poetry run ruff check --output-format=github --select=E9,F63,F7,F82 --target-version=py39 .
-      - poetry run ruff check --output-format=github --target-version=py39 .
+      - uv run --dev ruff check --output-format=github --select=E9,F63,F7,F82 --target-version=py39 .
+      - uv run --dev ruff check --output-format=github --target-version=py39 .
 
   docker:build:
     desc: Build the container using Docker
