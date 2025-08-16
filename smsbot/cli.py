@@ -1,8 +1,10 @@
 import argparse
 import asyncio
 import logging
+from configparser import ConfigParser
 import os
 from signal import SIGINT, SIGTERM
+import sys
 
 import uvicorn
 from asgiref.wsgi import WsgiToAsgi
@@ -15,41 +17,57 @@ from smsbot.webhook_handler import TwilioWebhookHandler
 def main():
     parser = argparse.ArgumentParser("smsbot")
     parser.add_argument(
-        "--listen-host", default=os.environ.get("SMSBOT_LISTEN_HOST") or "0.0.0.0"
+        "-c",
+        "--config",
+        default=os.environ.get("SMSBOT_CONFIG_FILE", "config.ini"),
+        type=argparse.FileType("r"),
+        help="Path to the config file",
     )
-    parser.add_argument(
-        "--listen-port", default=os.environ.get("SMSBOT_LISTEN_PORT") or 80, type=int
-    )
-    parser.add_argument(
-        "--telegram-bot-token", default=os.environ.get("SMSBOT_TELEGRAM_BOT_TOKEN")
-    )
-    parser.add_argument("--owner-id", default=os.environ.get("SMSBOT_OWNER_ID"))
-    parser.add_argument(
-        "--default-subscribers", default=os.environ.get("SMSBOT_DEFAULT_SUBSCRIBERS")
-    )
-    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     args = parser.parse_args()
 
     if args.debug:
         level = logging.DEBUG
     else:
         level = logging.INFO
-    logging.basicConfig(level=level)
+    logging.basicConfig(level=level, stream=sys.stdout)
     logging.info("smsbot v%s", get_smsbot_version())
     logging.debug("Arguments: %s", args)
 
+    # Load configuration ini file if provided
+    config = ConfigParser()
+    if args.config:
+        logging.info("Loading configuration from %s", args.config.name)
+        config.read_file(args.config)
+
+    # Override with environment variables, named SMSBOT_<SECTION>_<VALUE>
+    for key, value in os.environ.items():
+        if key.startswith("SMSBOT_"):
+            logging.debug("Overriding config %s with value %s", key, value)
+            section, option = key[7:].split("_", 1)
+            config[section][option] = value
+
+    # Validate configuration
+    if not config.has_section("telegram") or not config.get("telegram", "bot_token"):
+        logging.error("Telegram bot token is required")
+        return
+
+    # Now the config is loaded, set the logger level
+    level = getattr(logging, config.get("logging", "level", fallback="INFO").upper(), logging.INFO)
+    logging.getLogger().setLevel(level)
+
     # Start bot
-    telegram_bot = TelegramSmsBot(token=args.telegram_bot_token)
+    telegram_bot = TelegramSmsBot(token=config.get("telegram", "bot_token"))
 
     # Set the owner ID if configured
-    if args.owner_id:
-        telegram_bot.owners = [int(args.owner_id)]
+    if config.has_option("telegram", "owner_id"):
+        telegram_bot.owners = [config.getint("telegram", "owner_id")]
     else:
         logging.warning("No Owner ID is set, which is not a good idea...")
 
     # Add default subscribers
-    if args.default_subscribers:
-        for chat_id in args.default_subscribers.split(","):
+    if config.has_option("telegram", "default_subscribers"):
+        for chat_id in config.get("telegram", "default_subscribers").split(","):
             telegram_bot.subscribers.append(int(chat_id.strip()))
 
     webhooks = TwilioWebhookHandler()
@@ -59,9 +77,9 @@ def main():
     flask_app = uvicorn.Server(
         config=uvicorn.Config(
             app=WsgiToAsgi(webhooks.app),
-            port=args.listen_port,
+            port=config.getint("webhook", "port", fallback=5000),
             use_colors=False,
-            host=args.listen_host,
+            host=config.get("webhook", "host", fallback="127.0.0.1"),
         )
     )
 

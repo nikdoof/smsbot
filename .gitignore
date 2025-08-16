@@ -212,3 +212,6 @@ __marimo__/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# smsbot config file
+config.ini
