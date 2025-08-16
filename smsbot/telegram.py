@@ -28,7 +28,7 @@ class TelegramSmsBot:
 
     def init_handlers(self):
         self.app.add_handler(TypeHandler(Update, self.callback), -1)
-        self.app.add_handler(CommandHandler("help", self.handler_help))
+        self.app.add_handler(CommandHandler(["help", "start"], self.handler_help))
         self.app.add_handler(CommandHandler("subscribe", self.handler_subscribe))
         self.app.add_handler(CommandHandler("unsubscribe", self.handler_unsubscribe))
 
