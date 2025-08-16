@@ -11,14 +11,14 @@ image:
   # -- image pull policy
   pullPolicy: IfNotPresent
   # -- image tag
-  tag: 0.0.5
+  tag: 0.0.7
 
 # -- environment variables.
 # @default -- See below
 env:
   # -- Set the container timezone
   TZ: UTC
-  # SMSBOT_TELEGRAM_BOT_TOKEN: 
+  # SMSBOT_TELEGRAM_BOT_TOKEN:
 
 # -- Configures service settings for the chart.
 # @default -- See values.yaml
