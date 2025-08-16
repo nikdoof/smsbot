@@ -1,10 +1,10 @@
 import argparse
 import asyncio
 import logging
-from configparser import ConfigParser
 import os
-from signal import SIGINT, SIGTERM
 import sys
+from configparser import ConfigParser
+from signal import SIGINT, SIGTERM
 
 import uvicorn
 from asgiref.wsgi import WsgiToAsgi

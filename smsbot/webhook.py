@@ -1,4 +1,3 @@
-import os
 from functools import wraps
 
 from flask import Flask, abort, current_app, request

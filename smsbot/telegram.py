@@ -1,15 +1,16 @@
 import logging
 
-from smsbot.utils import get_smsbot_version
 from prometheus_client import Counter, Summary
 from telegram import Update
 from telegram.ext import (
     Application,
     ApplicationHandlerStop,
+    CommandHandler,
     ContextTypes,
     TypeHandler,
-    CommandHandler,
 )
+
+from smsbot.utils import get_smsbot_version
 
 REQUEST_TIME = Summary(
     "telegram_request_processing_seconds", "Time spent processing request"
