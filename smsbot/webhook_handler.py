@@ -7,7 +7,7 @@ from prometheus_client import Counter, Summary, make_wsgi_app
 from twilio.request_validator import RequestValidator
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
-from smsbot.utils import TwilioMessage, get_smsbot_version
+from smsbot.utils import TwilioWebhookPayload, get_smsbot_version
 
 REQUEST_TIME = Summary(
     "webhook_request_processing_seconds", "Time spent processing request"
@@ -88,7 +88,7 @@ class TwilioWebhookHandler(object):
         )
 
         await self.bot.send_subscribers(
-            TwilioMessage(request.values.to_dict()).to_markdownv2()
+            TwilioWebhookPayload.parse(request.values.to_dict()).to_markdownv2()
         )
 
         # Return a blank response
@@ -103,7 +103,7 @@ class TwilioWebhookHandler(object):
             "Received Call from {From}".format(**request.values.to_dict())
         )
         await self.bot.send_subscribers(
-            "Received Call from {From}, rejecting.".format(**request.values.to_dict())
+            TwilioWebhookPayload.parse(request.values.to_dict()).to_markdownv2()
         )
 
         # Always reject calls
