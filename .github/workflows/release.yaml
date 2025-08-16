@@ -1,6 +1,9 @@
 name: Release
-on:
+
+"on":
   push:
+    branches:
+      - main
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
 
