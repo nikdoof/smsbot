@@ -1,9 +1,15 @@
 import logging
 
-from prometheus_client import Counter, Summary
-from telegram.ext import CommandHandler, Updater
-
 from smsbot.utils import get_smsbot_version
+from prometheus_client import Counter, Summary
+from telegram import Update
+from telegram.ext import (
+    Application,
+    ApplicationHandlerStop,
+    ContextTypes,
+    TypeHandler,
+    CommandHandler,
+)
 
 REQUEST_TIME = Summary(
     "telegram_request_processing_seconds", "Time spent processing request"
@@ -11,108 +17,94 @@ REQUEST_TIME = Summary(
 COMMAND_COUNT = Counter("telegram_command_count", "Total number of commands processed")
 
 
-class TelegramSmsBot(object):
-    def __init__(
-        self, telegram_token, allow_subscribing=False, owner=None, subscribers=None
-    ):
+class TelegramSmsBot:
+    def __init__(self, token: str, owners: list[int] = [], subscribers: list[int] = []):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.bot_token = telegram_token
-        self.subscriber_ids = subscribers or []
-        self.set_owner(owner)
+        self.app = Application.builder().token(token).build()
+        self.owners = owners
+        self.subscribers = subscribers
 
-        self.updater = Updater(self.bot_token, use_context=True)
-        self.updater.dispatcher.add_handler(CommandHandler("help", self.help_handler))
-        self.updater.dispatcher.add_handler(CommandHandler("start", self.help_handler))
+        self.init_handlers()
 
-        if allow_subscribing:
-            self.updater.dispatcher.add_handler(
-                CommandHandler("subscribe", self.subscribe_handler)
+    def init_handlers(self):
+        self.app.add_handler(TypeHandler(Update, self.callback), -1)
+        self.app.add_handler(CommandHandler("help", self.handler_help))
+        self.app.add_handler(CommandHandler("subscribe", self.handler_subscribe))
+        self.app.add_handler(CommandHandler("unsubscribe", self.handler_unsubscribe))
+
+    async def callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle the update"""
+        if update.effective_user.id in self.owners:
+            self.logger.info(
+                f"{update.effective_user.username} sent {update.message.text}"
             )
-            self.updater.dispatcher.add_handler(
-                CommandHandler("unsubscribe", self.unsubscribe_handler)
-            )
+            COMMAND_COUNT.inc()
+        else:
+            self.logger.debug(f"Ignoring message from user {update.effective_user.id}")
+            raise ApplicationHandlerStop
 
-        self.updater.dispatcher.add_error_handler(self.error_handler)
+    async def send_message(self, chat_id: int, text: str):
+        """Send a message to a specific chat"""
+        self.logger.info(f"Sending message to chat {chat_id}: {text}")
+        await self.app.bot.send_message(
+            chat_id=chat_id, text=text, parse_mode="MarkdownV2"
+        )
 
-    def start(self):
-        self.logger.info("Starting bot...")
-        self.updater.start_polling()
-        self.bot = self.updater.bot
-        self.logger.info("Bot Ready")
+    async def send_subscribers(self, text: str):
+        """Send a message to all subscribers"""
+        for subscriber in self.subscribers:
+            self.logger.info(f"Sending message to subscriber {subscriber}")
+            await self.send_message(subscriber, text)
 
-    def stop(self):
-        self.updater.stop()
+    async def send_owners(self, text: str):
+        """Send a message to all owners"""
+        for owner in self.owners:
+            self.logger.info(f"Sending message to owner {owner}")
+            await self.send_message(owner, text)
 
     @REQUEST_TIME.time()
-    def help_handler(self, update, context):
+    async def handler_help(self, update, context):
         """Send a message when the command /help is issued."""
         self.logger.info("/help command received in chat: %s", update.message.chat)
 
         commands = []
-        for command in self.updater.dispatcher.handlers[0]:
-            commands.extend(["/{0}".format(cmd) for cmd in command.command])
+        for command in self.app.handlers[0]:
+            if isinstance(command, CommandHandler):
+                commands.extend(["/{0}".format(cmd) for cmd in command.commands])
 
-        update.message.reply_markdown(
+        await update.message.reply_markdown(
             "Smsbot v{0}\n\n{1}".format(get_smsbot_version(), "\n".join(commands))
         )
         COMMAND_COUNT.inc()
 
     @REQUEST_TIME.time()
-    def subscribe_handler(self, update, context):
-        self.logger.info("/subscribe command received")
-        if update.message.chat["id"] not in self.subscriber_ids:
-            self.logger.info("{0} subscribed".format(update.message.chat["username"]))
-            self.subscriber_ids.append(update.message.chat["id"])
-            self.send_owner(
-                "{0} has subscribed".format(update.message.chat["username"])
-            )
-            update.message.reply_markdown(
-                "You have been subscribed to SMS notifications"
+    async def handler_subscribe(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
+        """Handle subscription requests"""
+        user_id = update.effective_user.id
+        if user_id not in self.subscribers:
+            self.subscribers.append(user_id)
+            self.logger.info(f"User {user_id} subscribed.")
+            self.logger.info(f"Current subscribers: {self.subscribers}")
+            await update.message.reply_markdown(
+                "You have successfully subscribed to updates."
             )
         else:
-            update.message.reply_markdown(
-                "You are already subscribed to SMS notifications"
-            )
-        COMMAND_COUNT.inc()
+            self.logger.info(f"User {user_id} is already subscribed.")
 
     @REQUEST_TIME.time()
-    def unsubscribe_handler(self, update, context):
-        self.logger.info("/unsubscribe command received")
-        if update.message.chat["id"] in self.subscriber_ids:
-            self.logger.info("{0} unsubscribed".format(update.message.chat["username"]))
-            self.subscriber_ids.remove(update.message.chat["id"])
-            self.send_owner(
-                "{0} has unsubscribed".format(update.message.chat["username"])
-            )
-            update.message.reply_markdown(
-                "You have been unsubscribed to SMS notifications"
+    async def handler_unsubscribe(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ):
+        """Handle unsubscription requests"""
+        user_id = update.effective_user.id
+        if user_id in self.subscribers:
+            self.subscribers.remove(user_id)
+            self.logger.info(f"User {user_id} unsubscribed.")
+            self.logger.info(f"Current subscribers: {self.subscribers}")
+            await update.message.reply_markdown(
+                "You have successfully unsubscribed from updates."
             )
         else:
-            update.message.reply_markdown("You are not subscribed to SMS notifications")
-        COMMAND_COUNT.inc()
-
-    def error_handler(self, update, context):
-        """Log Errors caused by Updates."""
-        self.logger.warning('Update "%s" caused error "%s"', update, context.error)
-        self.send_owner(
-            'Update "%{0}" caused error "{1}"'.format(update, context.error)
-        )
-
-    def send_message(self, message, chat_id):
-        self.bot.sendMessage(text=message, chat_id=chat_id)
-
-    def send_owner(self, message):
-        if self.owner_id:
-            self.send_message(message, self.owner_id)
-
-    def send_subscribers(self, message):
-        for chat_id in self.subscriber_ids:
-            self.send_message(message, chat_id)
-
-    def set_owner(self, chat_id):
-        self.owner_id = chat_id
-        if self.owner_id and self.owner_id not in self.subscriber_ids:
-            self.subscriber_ids.append(self.owner_id)
-
-    def add_subscriber(self, chat_id):
-        self.subscriber_ids.append(chat_id)
+            self.logger.info(f"User {user_id} is not subscribed.")

@@ -15,3 +15,8 @@ tasks:
     desc: Build the container using Docker
     cmds:
       - docker build . -t smsbot:latest
+
+  smsbot:run:
+    desc: Run the SMSBot
+    cmds:
+      - uv run smsbot
