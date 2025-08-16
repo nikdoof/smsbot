@@ -5,7 +5,7 @@ description = "A simple Telegram bot to receive SMS messages."
 authors = [{ name = "Andrew Williams", email = "andy@tensixtyone.com" }]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.9,<3.10"
+requires-python = ">=3.13"
 dependencies = [
     "flask[async]>=3.1.1",
     "prometheus-async>=25.1.0",
