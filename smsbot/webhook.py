@@ -17,6 +17,9 @@ CALL_COUNT = Counter("webhook_call_count", "Total number of calls processed")
 
 
 class TwilioWebhookHandler(object):
+    """
+    A wrapped Flask app handling webhooks received from Twilio
+    """
     def __init__(self, account_sid: str | None = None, auth_token: str | None = None):
         self.app = Flask(self.__class__.__name__)
         self.app.add_url_rule("/", "index", self.index, methods=["GET"])
@@ -24,6 +27,7 @@ class TwilioWebhookHandler(object):
         self.app.add_url_rule("/message", "message", self.message, methods=["POST"])
         self.app.add_url_rule("/call", "call", self.call, methods=["POST"])
 
+        # Twilio auth details
         self.account_sid = account_sid
         self.auth_token = auth_token
 
@@ -79,7 +83,7 @@ class TwilioWebhookHandler(object):
         return {
             "version": get_smsbot_version(),
             "owners": self.bot.owners,
-            "subscribers": self.bot.subscribers,
+            "subscribers": len(self.bot.subscribers),
         }
 
     @time(REQUEST_TIME)
