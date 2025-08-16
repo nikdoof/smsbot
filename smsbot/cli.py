@@ -11,7 +11,7 @@ from asgiref.wsgi import WsgiToAsgi
 
 from smsbot.telegram import TelegramSmsBot
 from smsbot.utils import get_smsbot_version
-from smsbot.webhook_handler import TwilioWebhookHandler
+from smsbot.webhook import TwilioWebhookHandler
 
 
 def main():
@@ -70,7 +70,11 @@ def main():
         for chat_id in config.get("telegram", "default_subscribers").split(","):
             telegram_bot.subscribers.append(int(chat_id.strip()))
 
-    webhooks = TwilioWebhookHandler()
+    # Init the webhook handler
+    webhooks = TwilioWebhookHandler(
+        account_sid=config.get("twilio", "account_sid", fallback=None),
+        auth_token=config.get("twilio", "auth_token", fallback=None),
+    )
     webhooks.set_bot(telegram_bot)
 
     # Build a uvicorn ASGI server
