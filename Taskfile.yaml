@@ -1,5 +1,10 @@
 version: 3
 tasks:
+  python:tests:
+    desc: Run Python tests
+    cmds:
+      - uv run --dev --group github pytest
+
   python:lint:
     desc: Lint Python files
     cmds:
