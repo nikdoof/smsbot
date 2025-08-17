@@ -1,5 +1,10 @@
 version: 3
 tasks:
+  default:
+    deps:
+      - python:tests
+      - python:lint
+
   python:tests:
     desc: Run Python tests
     cmds:
