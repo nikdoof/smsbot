@@ -1,6 +1,6 @@
 [project]
 name = "smsbot"
-version = "0.2.1"
+version = "0.2.2"
 description = "A simple Telegram bot to receive SMS messages."
 authors = [{ name = "Andrew Williams", email = "andy@tensixtyone.com" }]
 license = { text = "MIT" }
