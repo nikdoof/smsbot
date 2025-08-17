@@ -30,3 +30,6 @@ dev = [
     "ruff>=0.12.9",
 ]
 github = ["pytest-github-actions-annotate-failures>=0.3.0"]
+
+[tool.ruff]
+line-length = 120
