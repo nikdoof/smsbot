@@ -24,13 +24,14 @@ def main():
         help="Path to the config file",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("--log-file", type=argparse.FileType("a"), help="Path to the log file", default=sys.stdout)
     args = parser.parse_args()
 
     if args.debug:
         level = logging.DEBUG
     else:
         level = logging.INFO
-    logging.basicConfig(level=level, stream=sys.stdout)
+    logging.basicConfig(level=level, stream=args.log_file)
     logging.info("smsbot v%s", get_smsbot_version())
     logging.debug("Arguments: %s", args)
 
@@ -49,7 +50,7 @@ def main():
 
     # Validate configuration
     if not config.has_section("telegram") or not config.get("telegram", "bot_token"):
-        logging.error("Telegram bot token is required")
+        logging.error("Telegram bot token is required, define a token either in the config file or as an environment variable.")
         return
 
     # Now the config is loaded, set the logger level
@@ -66,8 +67,8 @@ def main():
         logging.warning("No Owner ID is set, which is not a good idea...")
 
     # Add default subscribers
-    if config.has_option("telegram", "default_subscribers"):
-        for chat_id in config.get("telegram", "default_subscribers").split(","):
+    if config.has_option("telegram", "subscribers"):
+        for chat_id in config.get("telegram", "subscribers").split(","):
             telegram_bot.subscribers.append(int(chat_id.strip()))
 
     # Init the webhook handler
