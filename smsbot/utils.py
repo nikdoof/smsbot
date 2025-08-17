@@ -1,13 +1,13 @@
 from importlib.metadata import version
 
 
-def get_smsbot_version():
+def get_smsbot_version() -> str:
     return version("smsbot")
 
 
 class TwilioWebhookPayload:
     @staticmethod
-    def parse(data: dict):
+    def parse(data: dict[str, str]) -> "TwilioCall | TwilioMessage | None":
         """Return the correct class for the incoming Twilio webhook payload"""
         if "SmsMessageSid" in data:
             return TwilioMessage(data)
@@ -62,11 +62,7 @@ class TwilioMessage(TwilioWebhookPayload):
         return msg
 
     def to_markdownv2(self):
-        media_str = (
-            "\n".join([f"{self._escape(url)}" for url in self.media])
-            if self.media
-            else ""
-        )
+        media_str = "\n".join([f"{self._escape(url)}" for url in self.media]) if self.media else ""
         msg = f"**From**: {self._escape(self.from_number)}\n**To**: {self._escape(self.to_number)}\n\n{self._escape(self.body)}\n\n{media_str}"
         return msg
 
@@ -85,6 +81,6 @@ class TwilioCall(TwilioWebhookPayload):
         msg = f"Call from {self.from_number}, rejected."
         return msg
 
-    def to_markdownv2(self):
+    def to_markdownv2(self) -> str:
         msg = f"Call from {self._escape(self.from_number)}, rejected\\."
         return msg
