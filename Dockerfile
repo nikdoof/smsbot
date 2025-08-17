@@ -17,4 +17,5 @@ FROM python:${PYTHON_VERSION}-slim-bookworm
 COPY --from=builder --chown=app:app /app /app
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 5000/tcp
+WORKDIR /app
 CMD ["smsbot"]
