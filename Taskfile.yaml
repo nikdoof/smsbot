@@ -14,7 +14,7 @@ tasks:
   docker:build:
     desc: Build the container using Docker
     cmds:
-      - docker build . -t smsbot:latest
+      - docker build . --build-arg PYTHON_VERSION=$(cat .python-version) -t smsbot:latest
 
   smsbot:run:
     desc: Run the SMSBot
