@@ -16,5 +16,5 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM python:${PYTHON_VERSION}-slim-bookworm
 COPY --from=builder --chown=app:app /app /app
 ENV PATH="/app/.venv/bin:$PATH"
-EXPOSE 80/tcp
+EXPOSE 5000/tcp
 CMD ["smsbot"]
