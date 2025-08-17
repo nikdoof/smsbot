@@ -15,6 +15,10 @@ from smsbot.utils import get_smsbot_version
 from smsbot.webhook import TwilioWebhookHandler
 
 
+# Prefix of the environment variables to override config values
+ENVIRONMENT_PREFIX = "SMSBOT_"
+
+
 def main():
     parser = argparse.ArgumentParser("smsbot")
     parser.add_argument(
@@ -44,9 +48,11 @@ def main():
 
     # Override with environment variables, named SMSBOT_<SECTION>_<VALUE>
     for key, value in os.environ.items():
-        if key.startswith("SMSBOT_"):
-            logging.debug("Overriding config %s with value %s", key, value)
-            section, option = key[7:].split("_", 1)
+        if key.startswith(ENVIRONMENT_PREFIX):
+            section, option = key[7:].lower().split("_", 1)
+            logging.debug("Overriding config %s/%s = %s", section, option, value)
+            if not config.has_section(section):
+                config.add_section(section)
             config[section][option] = value
 
     # Validate configuration
