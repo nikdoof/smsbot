@@ -9,6 +9,7 @@ from telegram.ext import (
     ContextTypes,
     TypeHandler,
 )
+from twilio.rest import Client
 
 from smsbot.utils import get_smsbot_version
 
@@ -17,11 +18,20 @@ COMMAND_COUNT = Counter("telegram_command_count", "Total number of commands proc
 
 
 class TelegramSmsBot:
-    def __init__(self, token: str, owners: list[int] = [], subscribers: list[int] = []):
+    def __init__(
+        self,
+        token: str,
+        twilio_client: Client | None = None,
+        twilio_from_number: str | None = None,
+        owners: list[int] = [],
+        subscribers: list[int] = [],
+    ):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.app = Application.builder().token(token).build()
         self.owners = owners
         self.subscribers = subscribers
+        self.twilio_client = twilio_client
+        self.twilio_from_number = twilio_from_number
 
         self.init_handlers()
 
@@ -30,6 +40,7 @@ class TelegramSmsBot:
         self.app.add_handler(CommandHandler(["help", "start"], self.handler_help))
         self.app.add_handler(CommandHandler("subscribe", self.handler_subscribe))
         self.app.add_handler(CommandHandler("unsubscribe", self.handler_unsubscribe))
+        self.app.add_handler(CommandHandler("sms", self.handler_sms))
 
     async def callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle the update"""
@@ -97,3 +108,22 @@ class TelegramSmsBot:
                 await update.message.reply_markdown("You have successfully unsubscribed from updates.")
             else:
                 self.logger.info(f"User {user_id} is not subscribed.")
+
+    @REQUEST_TIME.time()
+    async def handler_sms(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle sending SMS requests"""
+        if update.effective_user and update.message:
+            user_id = update.effective_user.id
+            if self.twilio_client and self.twilio_from_number:
+                to = context.args[0] if context.args else "No recipient provided"
+                message = context.args[1] if context.args else "No message provided"
+                self.logger.info(f"Sending SMS from user {user_id} -> {to}: {message}")
+
+                try:
+                    self.twilio_client.messages.create(body=message, to=to, from_=self.twilio_from_number)
+                except Exception as e:
+                    self.logger.exception("Failed to send SMS due to exception")
+                    await update.message.reply_markdown("Failed to send SMS")
+                    pass
+            else:
+                await update.message.reply_markdown("Twilio client is not configured, cannot send SMS.")

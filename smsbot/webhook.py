@@ -6,7 +6,8 @@ from prometheus_client import Counter, Summary, make_wsgi_app
 from twilio.request_validator import RequestValidator
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
-from smsbot.utils import TwilioWebhookPayload, get_smsbot_version
+from smsbot.utils import get_smsbot_version
+from smsbot.utils.twilio import TwilioWebhookPayload
 
 REQUEST_TIME = Summary("webhook_request_processing_seconds", "Time spent processing request")
 MESSAGE_COUNT = Counter("webhook_message_count", "Total number of messages processed")
@@ -68,8 +69,9 @@ class TwilioWebhookHandler(object):
 
         return decorated_function
 
-    def set_bot(self, bot):
-        self.bot = bot
+    def set_telegram_application(self, app):
+        """Set the Telegram application instance to use for any webhook calls"""
+        self.telegram_app = app
 
     async def index(self) -> str:
         return f'smsbot v{get_smsbot_version()} - <a href="https://github.com/nikdoof/smsbot">GitHub</a>'
@@ -78,8 +80,8 @@ class TwilioWebhookHandler(object):
         """Return basic health information"""
         return {
             "version": get_smsbot_version(),
-            "owners": self.bot.owners,
-            "subscribers": len(self.bot.subscribers),
+            "owners": self.telegram_app.owners,
+            "subscribers": len(self.telegram_app.subscribers),
         }
 
     @time(REQUEST_TIME)
@@ -88,7 +90,7 @@ class TwilioWebhookHandler(object):
         current_app.logger.info("Received SMS from {From}: {Body}".format(**request.values.to_dict()))
         hook_data = TwilioWebhookPayload.parse(request.values.to_dict())
         if hook_data:
-            await self.bot.send_subscribers(hook_data.to_markdownv2())
+            await self.telegram_app.send_subscribers(hook_data.to_markdownv2())
 
         # Return a blank response
         MESSAGE_COUNT.inc()
@@ -100,7 +102,7 @@ class TwilioWebhookHandler(object):
         current_app.logger.info("Received Call from {From}".format(**request.values.to_dict()))
         hook_data = TwilioWebhookPayload.parse(request.values.to_dict())
         if hook_data:
-            await self.bot.send_subscribers(hook_data.to_markdownv2())
+            await self.telegram_app.send_subscribers(hook_data.to_markdownv2())
 
         # Always reject calls
         CALL_COUNT.inc()

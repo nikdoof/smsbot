@@ -5,6 +5,7 @@ import os
 import sys
 from configparser import ConfigParser
 from signal import SIGINT, SIGTERM
+from twilio.rest import Client
 
 import uvicorn
 from asgiref.wsgi import WsgiToAsgi
@@ -50,15 +51,37 @@ def main():
 
     # Validate configuration
     if not config.has_section("telegram") or not config.get("telegram", "bot_token"):
-        logging.error("Telegram bot token is required, define a token either in the config file or as an environment variable.")
+        logging.error(
+            "Telegram bot token is required, define a token either in the config file or as an environment variable."
+        )
+        return
+
+    if config.has_section("twilio") and not (config.get("twilio", "account_sid") and config.get("twilio", "auth_token") and config.get("twilio", "from_number")):
+        logging.error(
+            "Twilio account SID, auth token, and from number are required for outbound SMS functionality, define them in the config file or as environment variables."
+        )
         return
 
     # Now the config is loaded, set the logger level
     level = getattr(logging, config.get("logging", "level", fallback="INFO").upper(), logging.INFO)
     logging.getLogger().setLevel(level)
 
+    # Configure Twilio client if we have credentials
+    if config.has_section("twilio") and config.get("twilio", "account_sid") and config.get("twilio", "auth_token"):
+        twilio_client = Client(
+            config.get("twilio", "account_sid"),
+            config.get("twilio", "auth_token"),
+        )
+    else:
+        twilio_client = None
+        logging.warning("No Twilio credentials found, outbound SMS functionality will be disabled.")
+
     # Start bot
-    telegram_bot = TelegramSmsBot(token=config.get("telegram", "bot_token"))
+    telegram_bot = TelegramSmsBot(
+        token=config.get("telegram", "bot_token"),
+        twilio_client=twilio_client,
+        twilio_from_number=config.get("twilio", "from_number", fallback=None),
+    )
 
     # Set the owner ID if configured
     if config.has_option("telegram", "owner_id"):
@@ -76,7 +99,7 @@ def main():
         account_sid=config.get("twilio", "account_sid", fallback=None),
         auth_token=config.get("twilio", "auth_token", fallback=None),
     )
-    webhooks.set_bot(telegram_bot)
+    webhooks.set_telegram_application(telegram_bot)
 
     # Build a uvicorn ASGI server
     flask_app = uvicorn.Server(

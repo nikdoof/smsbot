@@ -1,10 +1,3 @@
-from importlib.metadata import version
-
-
-def get_smsbot_version() -> str:
-    return version("smsbot")
-
-
 class TwilioWebhookPayload:
     @staticmethod
     def parse(data: dict[str, str]) -> "TwilioCall | TwilioMessage | None":
