@@ -15,6 +15,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:${PYTHON_VERSION}-slim-bookworm
 COPY --from=builder --chown=app:app /app /app
+COPY ./docs/examples/config-basic.ini /app/config.ini
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 5000/tcp
 WORKDIR /app
