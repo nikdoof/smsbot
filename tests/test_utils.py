@@ -1,4 +1,4 @@
-from smsbot.utils import TwilioMessage
+from smsbot.utils.twilio import TwilioMessage
 
 
 def test_twiliomessage_normal():

@@ -121,7 +121,7 @@ class TelegramSmsBot:
 
                 try:
                     self.twilio_client.messages.create(body=message, to=to, from_=self.twilio_from_number)
-                except Exception as e:
+                except Exception:
                     self.logger.exception("Failed to send SMS due to exception")
                     await update.message.reply_markdown("Failed to send SMS")
                     pass
