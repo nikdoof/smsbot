@@ -49,7 +49,11 @@ def main():
     # Override with environment variables, named SMSBOT_<SECTION>_<VALUE>
     for key, value in os.environ.items():
         if key.startswith(ENVIRONMENT_PREFIX):
-            section, option = key[7:].lower().split("_", 1)
+            try:
+                section, option = key[7:].lower().split("_", 1)
+            except ValueError:
+                logging.debug("Invalid environment variable format: %s", key)
+                continue
             logging.debug("Overriding config %s/%s = %s", section, option, value)
             if not config.has_section(section):
                 config.add_section(section)
